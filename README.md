@@ -21,12 +21,12 @@ Features
   The application uses the following dependencies
   
 		Spring Boot Starter:
-	  Spring Web
+	        Spring Web
 		Spring Data JPA
 		Spring Security
 		Database:
 		MySQL
-    HikariCP (default Spring Boot connection pool)
+                HikariCP (default Spring Boot connection pool)
 		Utilities:
 		Jackson Datatype JSR310 for LocalDate/LocalDateTime serialization.
 		jjwt for JWT token management.
