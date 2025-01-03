@@ -1,0 +1,336 @@
+{
+	"info": {
+		"_postman_id": "0c27de2d-7459-4647-9536-e30599a1213c",
+		"name": "idms",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "37207837"
+	},
+	"item": [
+		{
+			"name": "jwt-token-generation",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": {
+						"password": "DriveSoft@@!",
+						"username": "admin"
+					}
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Username",
+						"value": "admin",
+						"type": "text"
+					},
+					{
+						"key": "Password",
+						"value": "DriveSoft@@!",
+						"type": "text"
+					}
+				],
+				"url": "http://localhost:8080/api/authenticate"
+			},
+			"response": []
+		},
+		{
+			"name": "New Request",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "external-endpoint-to-fetch",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTczNTg5MTcxOSwiZXhwIjoxNzM1OTI3NzE5fQ.kJy8F6qbXF5sSXcLTrLaM195vWfv-2X06l3SzKno9Q8",
+						"type": "text"
+					}
+				],
+				"url": "http://localhost:8080/api/accounts/fetch"
+			},
+			"response": []
+		},
+		{
+			"name": "get-account-list",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTczNTg5MTcxOSwiZXhwIjoxNzM1OTI3NzE5fQ.kJy8F6qbXF5sSXcLTrLaM195vWfv-2X06l3SzKno9Q8",
+						"type": "text"
+					}
+				],
+				"url": "http://localhost:8080/api/accounts/GetAccountList"
+			},
+			"response": []
+		},
+		{
+			"name": "create-or-update-Insurance-Info",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"insuranceProvider\": \"ABC Insurance\",\n    \"policyNumber\": \"POL123456\",\n    \"effectiveDate\": \"2025-01-01\",\n    \"expirationDate\": \"2025-12-31\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8080//api/accounts/AddOrUpdateInsuranceInfo"
+			},
+			"response": []
+		},
+		{
+			"name": "get-all-insurance-info",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTczNTkxNzgwNiwiZXhwIjoxNzM1OTUzODA2fQ.bJdc0f1WzIAXDK6b8vI4phsGS6-8DTmK6y6CErVP15A",
+						"type": "text"
+					}
+				],
+				"url": "http://localhost:8080/api/accounts/GetAllInsuranceInfo"
+			},
+			"response": []
+		},
+		{
+			"name": "get-account-list",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTczNTkxNzgwNiwiZXhwIjoxNzM1OTUzODA2fQ.bJdc0f1WzIAXDK6b8vI4phsGS6-8DTmK6y6CErVP15A",
+						"type": "text"
+					}
+				],
+				"url": "http://localhost:8080/api/accounts/GetAccountList"
+			},
+			"response": []
+		},
+		{
+			"name": "create-or-update-bulk-insurance",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTczNTkxNzgwNiwiZXhwIjoxNzM1OTUzODA2fQ.bJdc0f1WzIAXDK6b8vI4phsGS6-8DTmK6y6CErVP15A",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[\n    {\n        \"accountId\": 101,\n        \"insuranceProvider\": \"ABC Insurance\",\n        \"policyNumber\": \"POL123456\",\n        \"effectiveDate\": \"2025-01-01\",\n        \"expirationDate\": \"2025-12-31\"\n    },\n    {\n        \"accountId\": 102,\n        \"insuranceProvider\": \"XYZ Insurance\",\n        \"policyNumber\": \"POL654321\",\n        \"effectiveDate\": \"2025-02-01\",\n        \"expirationDate\": \"2025-12-31\"\n    }\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8080/api/accounts/BulkInsuranceInputs"
+			},
+			"response": []
+		},
+		{
+			"name": "get-bulk-insurance-list",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTczNTkxNzgwNiwiZXhwIjoxNzM1OTUzODA2fQ.bJdc0f1WzIAXDK6b8vI4phsGS6-8DTmK6y6CErVP15A",
+						"type": "text"
+					}
+				],
+				"url": "http://localhost:8080/api/accounts/getInsuranceInputList"
+			},
+			"response": []
+		},
+		{
+			"name": "create-or-update-side-note",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTczNTkxNzgwNiwiZXhwIjoxNzM1OTUzODA2fQ.bJdc0f1WzIAXDK6b8vI4phsGS6-8DTmK6y6CErVP15A",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"accountId\": 101,\n    \"noteType\": \"Reminder\",\n    \"description\": \"This is a test side note\",\n    \"createdDate\": \"2025-01-01\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8080/api/accounts/CreateSideNote"
+			},
+			"response": []
+		},
+		{
+			"name": "get-side-notes-by-account-ID",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTczNTkxNzgwNiwiZXhwIjoxNzM1OTUzODA2fQ.bJdc0f1WzIAXDK6b8vI4phsGS6-8DTmK6y6CErVP15A",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/api/accounts/GetSideNotes?accountId=101",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"accounts",
+						"GetSideNotes"
+					],
+					"query": [
+						{
+							"key": "accountId",
+							"value": "101"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-all-side-notes",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTczNTkxNzgwNiwiZXhwIjoxNzM1OTUzODA2fQ.bJdc0f1WzIAXDK6b8vI4phsGS6-8DTmK6y6CErVP15A",
+						"type": "text"
+					}
+				],
+				"url": "http://localhost:8080/api/accounts/AllSideNotes"
+			},
+			"response": []
+		},
+		{
+			"name": "get-account-info",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTczNTkxNzgwNiwiZXhwIjoxNzM1OTUzODA2fQ.bJdc0f1WzIAXDK6b8vI4phsGS6-8DTmK6y6CErVP15A",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/api/accounts/GetAccountInfo?accountId=101",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"accounts",
+						"GetAccountInfo"
+					],
+					"query": [
+						{
+							"key": "accountId",
+							"value": "101"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetQueueList",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:8080/api/accounts/GetQueueList"
+			},
+			"response": []
+		},
+		{
+			"name": "create-or-update-sales-location",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTczNTkxNzgwNiwiZXhwIjoxNzM1OTUzODA2fQ.bJdc0f1WzIAXDK6b8vI4phsGS6-8DTmK6y6CErVP15A",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"salesLocationId\": null,\n    \"name\": \"Main Street Branch\",\n    \"city\": \"Los Angeles\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8080/api/accounts/AddOrUpdateSalesLocation"
+			},
+			"response": []
+		},
+		{
+			"name": "get-all -sales-locations",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTczNTkxNzgwNiwiZXhwIjoxNzM1OTUzODA2fQ.bJdc0f1WzIAXDK6b8vI4phsGS6-8DTmK6y6CErVP15A",
+						"type": "text"
+					}
+				],
+				"url": "http://localhost:8080/api/accounts/GetSalesLocations"
+			},
+			"response": []
+		},
+		{
+			"name": "get-sales-location-by-id",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTczNTkyMDYzOCwiZXhwIjoxNzM1OTU2NjM4fQ.aQ9whRAWH8eQPnArwlo5UgVWJtTjtt1bhbr-1qe9cnI",
+						"type": "text"
+					}
+				],
+				"url": "http://localhost:8080/api/accounts/GetSalesLocation/1"
+			},
+			"response": []
+		}
+	]
+}
