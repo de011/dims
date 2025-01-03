@@ -1,5 +1,8 @@
+
+
 IDMS API Integration
 ----------------------
+
 This project is a Spring Boot application for integrating with the IDMS API, storing data in a MySQL database, and exposing endpoints for various account-related operations. 
 The application uses JWT for authentication and ensures data integrity with appropriate validations.
 
@@ -37,10 +40,12 @@ Features
 		Maven: Ensure Maven is installed and configured.
 
   Clone the Repository
+  
   git clone <https://github.com/de011/dims.git>
 
 Running the Application
 ------------------------
+
 Run the following Maven command to build the project
 
 1. mvn clean install
@@ -50,16 +55,19 @@ Run the following Maven command to build the project
 Authentication
 --------------
 1. Generate a JWT Token
+   
     - http://localhost:8080/api/authenticate
+   
       header pass the - Username as admin and password as DriveSoft@@!
 
 
-      Note
+      Note -
       
-      1.Attached complete postmen collections, downlad the collection from <https://github.com/de011/idms/blob/main/idms.postman_collection.json>
-        Open the postmen and import and use it.
+      1. Attached complete postmen collections, downlad the collection from <https://github.com/de011/idms/blob/main/idms.postman_collection.json>
+         Open the postmen and import and use it.
+         
 
-     2.  MySQL Script downalod from here <https://github.com/de011/idms/blob/main/idms_account.sql>  then  import or Run the all script. 
+      3.  MySQL Script downalod from here <https://github.com/de011/idms/blob/main/idms_account.sql>  then  import or Run the all script. 
 
 
 
