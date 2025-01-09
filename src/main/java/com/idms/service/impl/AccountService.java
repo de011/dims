@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.idms.entity.Account;
 import com.idms.repo.AccountRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -15,85 +17,65 @@ import java.util.List;
 
 @Service
 public class AccountService {
+    private static final Logger logger = LoggerFactory.getLogger(AccountService.class);
     @Autowired
     private AccountRepository accountRepository;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-/*    public void fetchAndSaveAccounts(String token) {
-        try {
-            String url = "https://idms.dealersocket.com/api/Account/GetAccountList" +
-                    "?Token=" + token +
-                    "&LayoutID=2006084&PageNumber=1&AccountStatus=a&InstitutionID=107007";
-
-            // Fetch raw JSON response
-            String response = restTemplate.getForObject(url, String.class);
-
-            // Parse the response as a JSON object
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode rootNode = objectMapper.readTree(response);
-
-            // Check the "Status" field in the response
-            if (rootNode.has("Status") && rootNode.get("Status").asText().equals("404")) {
-                throw new RuntimeException("Invalid token: " + rootNode.get("Message").asText());
-            }
-
-            // Extract the "Data" node
-            JsonNode dataNode = rootNode.get("Data");
-            if (dataNode == null || !dataNode.isArray()) {
-                throw new RuntimeException("No account data found in the API response.");
-            }
-
-            // Deserialize the "Data" array to a list of Account objects
-            List<Account> accounts = objectMapper.readerForListOf(Account.class).readValue(dataNode);
-
-            // Save only new accounts
-            accounts.forEach(account -> {
-                if (!accountRepository.existsById(account.getAcctId())) {
-                    accountRepository.save(account);
-                }
-            });
-        } catch (Exception e) {
-            throw new RuntimeException("Error processing accounts from the external API: " + e.getMessage(), e);
-        }
-    }*/
-
-    @Value("${mock.token}")
+    @Value("${bearer.token}")
     private String validToken;
 
     public boolean isValidToken(String token) {
         return validToken.equals(token);
     }
 
-    public List<Account> getMockAccounts() {
-        return accountRepository.findAll(); // Fetch from the database
+    /**
+     * Fetches account data from an external API and saves it to the local database.
+     *
+     * @param jwtToken the JSON Web Token used for authentication with the external API
+     */
+    public void fetchAndSaveAccounts(String jwtToken) {
+        //Replace here the external API
+        String accountListUrl = "http://localhost:8080/api/accounts/GetAccountLists?Token=bearer-token&LayoutID=2006084&PageNumber=1&AccountStatus=a&InstitutionID=107007";
+
+        HttpEntity<String> entity = createHttpEntity(jwtToken);
+        ResponseEntity<String> response = makeApiCall(accountListUrl, entity);
+
+        validateResponse(response);
+
+        List<Account> accounts = parseAccountData(response.getBody());
+        saveAccounts(accounts);
     }
 
+    private HttpEntity<String> createHttpEntity(String jwtToken) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + jwtToken);
+        return new HttpEntity<>(headers);
+    }
 
-    public void fetchAndSaveAccounts(String jwtToken) {
+    private ResponseEntity<String> makeApiCall(String url, HttpEntity<String> entity) {
+        return restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+    }
+
+    private void validateResponse(ResponseEntity<String> response) {
+        if (response.getStatusCode() != HttpStatus.OK) {
+            throw new RuntimeException("Failed to fetch accounts: " + response.getBody());
+        }
+    }
+
+    private List<Account> parseAccountData(String responseBody) {
         try {
-            // Step 1: Authenticate and fetch data
-            String accountListUrl = "http://localhost:8080/api/accounts/GetAccountLists?Token=mock-token&LayoutID=2006084&PageNumber=1&AccountStatus=a&InstitutionID=107007";
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Bearer " + jwtToken);
-
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-            RestTemplate restTemplate = new RestTemplate();
-
-            ResponseEntity<String> response = restTemplate.exchange(accountListUrl, HttpMethod.GET, entity, String.class);
-
-            if (response.getStatusCode() != HttpStatus.OK) {
-                throw new RuntimeException("Failed to fetch accounts: " + response.getBody());
-            }
-
-            // Use custom ObjectMapper
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.registerModule(new JavaTimeModule());
 
-            JsonNode rootNode = objectMapper.readTree(response.getBody());
-            if (!"200".equals(rootNode.get("Status").asText())) {
-                throw new RuntimeException("Error fetching accounts: " + rootNode.get("Message").asText());
+            JsonNode rootNode = objectMapper.readTree(responseBody);
+            JsonNode statusNode = rootNode.get("Status");
+            if (statusNode == null || !"200".equals(statusNode.asText())) {
+                String errorMessage = "Error fetching accounts: ";
+                JsonNode messageNode = rootNode.get("Message");
+                errorMessage += (messageNode != null) ? messageNode.asText() : "No message provided"; // Default message if none is found
+                throw new RuntimeException(errorMessage);
             }
 
             JsonNode dataNode = rootNode.get("Data");
@@ -101,18 +83,27 @@ public class AccountService {
                 throw new RuntimeException("No account data found in the API response.");
             }
 
-            List<Account> accounts = objectMapper.readerForListOf(Account.class).readValue(dataNode);
-            accounts.forEach(account -> {
-                if (!accountRepository.existsById(account.getAcctId())) {
-                    accountRepository.save(account);
-                }
-            });
+            return objectMapper.readerForListOf(Account.class).readValue(dataNode);
         } catch (Exception e) {
-            throw new RuntimeException("Error processing accounts: " + e.getMessage(), e);
+            throw new RuntimeException("Error parsing account data: " + e.getMessage(), e);
         }
     }
 
-    public List<Account> getAllAccounts() {
-        return accountRepository.findAll();
+    private void saveAccounts(List<Account> accounts) {
+        accounts.forEach(account -> {
+            if (!accountRepository.existsById(account.getAcctId())) {
+                accountRepository.save(account);
+            }
+        });
     }
+    public List<Account> getAllAccounts() {
+        try {
+            List<Account> accounts = accountRepository.findAll();
+            logger.info("Fetched {} accounts from the database.", accounts.size());
+            return accounts;
+        } catch (Exception e) {
+            logger.error("Error fetching accounts from the database: {}", e.getMessage());
+            throw new RuntimeException("Failed to retrieve accounts. Please try again later.", e);
+        }
+   }
 }

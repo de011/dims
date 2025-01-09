@@ -1,41 +1,40 @@
 package com.idms.controller;
 
+import com.idms.dto.AuthResponse;
+import com.idms.service.impl.UserService;
 import com.idms.utility.JwtUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Base64;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api")
 public class AuthenticationController {
     private final JwtUtil jwtUtil;
+    private final UserService userService;
 
-    public AuthenticationController(JwtUtil jwtUtil) {
+    @Value("${auth.username}")
+    private String username;
+
+    @Value("${auth.password}")
+    private String password;
+
+    public AuthenticationController(JwtUtil jwtUtil, UserService userService) {
         this.jwtUtil = jwtUtil;
+        this.userService = userService;
     }
 
-
     @PostMapping("/authenticate")
-    public ResponseEntity<String> authenticate(
-            @RequestHeader(value = "Authorization", required = false) String authorization) {
-        if (authorization == null || !authorization.startsWith("Basic ")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Missing or invalid Authorization header");
+    public ResponseEntity<AuthResponse> authenticate() {
+        if (username == null || password == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new AuthResponse("Username or password cannot be null"));
         }
-        String credentials = new String(Base64.getDecoder().decode(authorization.substring(6)));
-        String[] parts = credentials.split(":");
-        String username = parts[0];
-        String password = parts[1];
 
-        if ("admin".equals(username) && "DriveSoft@@!".equals(password)) {
+        if (userService.validateUser (username, password)) {
             String token = jwtUtil.generateToken(username);
-            return ResponseEntity.ok(token);
+            return ResponseEntity.ok(new AuthResponse(token));
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new AuthResponse("Invalid credentials"));
     }
 }
