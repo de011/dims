@@ -26,11 +26,6 @@ public class AccountService {
     public boolean isValidToken(String token) {
         return validToken.equals(token);
     }
-
-    public List<Account> getMockAccounts() {
-        return accountRepository.findAll(); // Fetch from the database
-    }
-
     public void fetchAndSaveAccounts(String jwtToken) {
         try {
             String accountListUrl = "http://localhost:8080/api/accounts/GetAccountLists?Token=mock-token&LayoutID=2006084&PageNumber=1&AccountStatus=a&InstitutionID=107007";
