@@ -51,174 +51,35 @@ public class AccountController {
     @Autowired
     private SalesLocationService salesLocationService;
 
-
-    /*@PostMapping("/fetch")
-    public ResponseEntity<?> fetchAccounts(@RequestHeader(value = "Authorization") String bearerToken) {
-        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing or invalid Authorization header");
-        }
-
-        try {
-            accountService.fetchAndSaveAccounts(bearerToken.replace("Bearer ", ""));
-            return ResponseEntity.ok("Accounts fetched and saved successfully.");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
-    }
-
-    @GetMapping("/GetAccountList")
-    public ResponseEntity<?> getAllAccounts(@RequestHeader(value = "Authorization") String bearerToken) {
-        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing or invalid Authorization header");
-        }
-
-        try {
-            List<Account> accounts = accountService.getAllAccounts();
-            return accounts.isEmpty() ? ResponseEntity.ok("No accounts found.") : ResponseEntity.ok(accounts);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
-    }
-    @GetMapping("/GetAccountLists")
-    public ResponseEntity<?> getAccountList(
-            @RequestParam String Token,
-            @RequestParam String LayoutID,
-            @RequestParam String PageNumber,
-            @RequestParam String AccountStatus,
-            @RequestParam String InstitutionID) {
-
-        if ("mock-token".equals(Token)) {
-            return ResponseEntity.ok(Map.of(
-                    "Status", "200",
-                    "Message", "Success",
-                    "Data", List.of(
-                            Map.ofEntries(
-                                    Map.entry("acctId", 12345),
-                                    Map.entry("contractSalesPrice", 25000.00),
-                                    Map.entry("acctType", "Loan"),
-                                    Map.entry("salesGroupPerson1Id", 10),
-                                    Map.entry("contractDate", "2023-12-15"),
-                                    Map.entry("collateralStockNumber", "ABC123"),
-                                    Map.entry("collateralYearModel", 2023),
-                                    Map.entry("collateralMake", "Toyota"),
-                                    Map.entry("collateralModel", "Camry"),
-                                    Map.entry("borrower1FirstName", "John"),
-                                    Map.entry("borrower1LastName", "Doe")
-                            )
-                    )
-            ));
-        }
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
-                "Status", "401",
-                "Message", "Invalid Token"
-        ));
-    }
-
-*/
     @PostMapping("/fetch")
-    public ResponseEntity<String> fetchAccounts(@RequestHeader(value = "Authorization", required = false) String bearerToken) {
+    public ResponseEntity<String> fetchAccounts(@RequestHeader(value = "Authorization") String bearerToken) {
         if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing or invalid Authorization header. Expected format: 'Bearer <token>'");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing or invalid Authorization header.");
         }
 
-        try {
-            String token = bearerToken.replace("Bearer ", "");
-            System.out.println("Token: " + token);
-
-            String username = jwtUtil.extractUsername(token);
-            System.out.println("Extracted Username: " + username);
-
-            if (!jwtUtil.validateToken(token, username)) {
-                System.out.println("Token is invalid or expired");
-                return ResponseEntity.status(UNAUTHORIZED).body("Invalid or expired token");
-            }
-
-            accountService.fetchAndSaveAccounts(token);
-            return ResponseEntity.ok("Accounts fetched and saved successfully.");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("Error fetching accounts: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("Unexpected error occurred: " + e.getMessage());
+        String token = bearerToken.replace("Bearer ", "");
+        if (!jwtUtil.validateToken(token, jwtUtil.extractUsername(token))) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired token");
         }
+
+        accountService.fetchAndSaveAccounts(token);
+        return ResponseEntity.ok("Accounts fetched and saved successfully.");
     }
 
     @GetMapping("/GetAccountList")
-    public ResponseEntity<?> getAllAccounts(@RequestHeader(value = "Authorization", required = false) String bearerToken) {
-        try {
-
-            if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing or invalid Authorization header. Expected format: 'Bearer <token>'");
-            }
-
-            String token = bearerToken.replace("Bearer ", "");
-            String username = jwtUtil.extractUsername(token);
-
-            if (!jwtUtil.validateToken(token, username)) {
-                return ResponseEntity.status(UNAUTHORIZED).body("Invalid or expired token");
-            }
-
-
-            List<Account> accounts = accountService.getAllAccounts();
-
-            if (accounts.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.OK).body("No accounts found in the database.");
-            }
-
-            return ResponseEntity.ok(accounts);
-        } catch (Exception e) {
-            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("An error occurred while retrieving accounts: " + e.getMessage());
+    public ResponseEntity<List<Account>> getAllAccounts(@RequestHeader(value = "Authorization") String bearerToken) {
+        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
+
+        String token = bearerToken.replace("Bearer ", "");
+        if (!jwtUtil.validateToken(token, jwtUtil.extractUsername(token))) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+
+        List<Account> accounts = accountService.getAllAccounts();
+        return ResponseEntity.ok(accounts);
     }
-    /*@GetMapping("/GetAccountLists")
-    public ResponseEntity<?> getAccountList(
-            @RequestParam String Token,
-            @RequestParam String LayoutID,
-            @RequestParam String PageNumber,
-            @RequestParam String AccountStatus,
-            @RequestParam String InstitutionID) {
-
-        if ("mock-token".equals(Token)) {
-            return ResponseEntity.ok(Map.of(
-                    "Status", "200",
-                    "Message", "Success",
-                    "Data", List.of(
-                            Map.ofEntries(
-                                    Map.entry("acctId", 12345),
-                                    Map.entry("contractSalesPrice", 25000.00),
-                                    Map.entry("acctType", "Loan"),
-                                    Map.entry("salesGroupPerson1Id", 10),
-                                    Map.entry("contractDate", "2023-12-15"),
-                                    Map.entry("collateralStockNumber", "ABC123"),
-                                    Map.entry("collateralYearModel", 2023),
-                                    Map.entry("collateralMake", "Toyota"),
-                                    Map.entry("collateralModel", "Camry"),
-                                    Map.entry("borrower1FirstName", "John"),
-                                    Map.entry("borrower1LastName", "Doe")
-                            )
-                    )
-            ));
-        }
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
-                "Status", "401",
-                "Message", "Invalid Token"
-        ));
-    }*/
-
-    @GetMapping("/GetAccountLists")
-    public ResponseEntity<?> getAccountList(@RequestParam String Token, @RequestParam String LayoutID, @RequestParam String PageNumber, @RequestParam String AccountStatus, @RequestParam String InstitutionID) {
-
-        if (!accountService.isValidToken(Token)) {
-            return ResponseEntity.status(UNAUTHORIZED).body(Map.of("Status", "401", "Message", "Invalid Token"));
-        }
-
-        List<Account> accountData = accountService.getMockAccounts();
-
-        return ResponseEntity.ok(Map.of("Status", "200", "Message", "Success", "Data", accountData));
-    }
-
-
     // Another PDF requirements
 
 
