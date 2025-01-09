@@ -20,7 +20,7 @@ public class AccountService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @Value("${mock.token}")
+    @Value("${bearer.token}")
     private String validToken;
 
     public boolean isValidToken(String token) {
@@ -28,7 +28,7 @@ public class AccountService {
     }
     public void fetchAndSaveAccounts(String jwtToken) {
         try {
-            String accountListUrl = "http://localhost:8080/api/accounts/GetAccountLists?Token=mock-token&LayoutID=2006084&PageNumber=1&AccountStatus=a&InstitutionID=107007";
+            String accountListUrl = "http://localhost:8080/api/accounts/GetAccountLists?Token=bearer-token&LayoutID=2006084&PageNumber=1&AccountStatus=a&InstitutionID=107007";
 
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", "Bearer " + jwtToken);

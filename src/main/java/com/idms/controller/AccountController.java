@@ -44,7 +44,6 @@ public class AccountController {
     @Autowired
     private SalesLocationService salesLocationService;
 
-    // A utility function to extract and validate token
     private String extractAndValidateToken(String bearerToken) {
         if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
             throw new IllegalArgumentException("Missing or invalid Authorization header.");
@@ -53,7 +52,7 @@ public class AccountController {
         if (!jwtUtil.validateToken(token, jwtUtil.extractUsername(token))) {
             throw new IllegalArgumentException("Invalid or expired token");
         }
-        return token; // Return the valid token
+        return token;
     }
 
     @PostMapping("/fetch")
