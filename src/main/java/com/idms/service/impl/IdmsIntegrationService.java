@@ -31,7 +31,6 @@ public class IdmsIntegrationService {
                 entity,
                 Account[].class
         );
-
         return Arrays.asList(response.getBody());
     }
 }
