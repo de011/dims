@@ -1,5 +1,4 @@
 package com.idms.controller;
-
 import com.idms.dto.*;
 import com.idms.entity.*;
 import com.idms.exception.InsuranceServiceException;
@@ -16,9 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
-
-import static org.springframework.http.HttpStatus.*;
 
 @RestController
 @RequestMapping("/api/accounts")
@@ -33,14 +29,11 @@ public class AccountController {
     @Autowired
     private InsuranceService insuranceService;
 
-
     @Autowired
     private BulkInsuranceService bulkInsuranceService;
 
-
     @Autowired
     private SideNoteService sideNoteService;
-
 
     @Autowired
     private AccountInfoService accountInfoService;
@@ -51,57 +44,58 @@ public class AccountController {
     @Autowired
     private SalesLocationService salesLocationService;
 
-    @PostMapping("/fetch")
-    public ResponseEntity<String> fetchAccounts(@RequestHeader(value = "Authorization") String bearerToken) {
+    // A utility function to extract and validate token
+    private String extractAndValidateToken(String bearerToken) {
         if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing or invalid Authorization header.");
+            throw new IllegalArgumentException("Missing or invalid Authorization header.");
         }
-
-        String token = bearerToken.replace("Bearer ", "");
+        String token = bearerToken.substring(7);
         if (!jwtUtil.validateToken(token, jwtUtil.extractUsername(token))) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired token");
+            throw new IllegalArgumentException("Invalid or expired token");
         }
+        return token; // Return the valid token
+    }
 
-        accountService.fetchAndSaveAccounts(token);
-        return ResponseEntity.ok("Accounts fetched and saved successfully.");
+    @PostMapping("/fetch")
+    public ResponseEntity<String> fetchAccounts(@RequestHeader("Authorization") String bearerToken) {
+        try {
+            String token = extractAndValidateToken(bearerToken);
+            accountService.fetchAndSaveAccounts(token);
+            return ResponseEntity.ok("Accounts fetched and saved successfully.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     @GetMapping("/GetAccountList")
-    public ResponseEntity<List<Account>> getAllAccounts(@RequestHeader(value = "Authorization") String bearerToken) {
-        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
+    public ResponseEntity<List<Account>> getAllAccounts(@RequestHeader("Authorization") String bearerToken) {
+        try {
+            String token = extractAndValidateToken(bearerToken);
+            List<Account> accounts = accountService.getAllAccounts();
+            return ResponseEntity.ok(accounts);
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
-
-        String token = bearerToken.replace("Bearer ", "");
-        if (!jwtUtil.validateToken(token, jwtUtil.extractUsername(token))) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-        }
-
-        List<Account> accounts = accountService.getAllAccounts();
-        return ResponseEntity.ok(accounts);
     }
-    // Another PDF requirements
-
 
     @PostMapping("/AddOrUpdateInsuranceInfo")
-    public ResponseEntity<?> addOrUpdateInsuranceInfo(@RequestHeader("Authorization") String token, @RequestBody InsuranceInfoDTO insuranceInfoDTO) {
+    public ResponseEntity<ApiResponse<?>> addOrUpdateInsuranceInfo(@RequestHeader("Authorization") String bearerToken, @RequestBody @Valid InsuranceInfoDTO insuranceInfoDTO) {
         try {
+            String token = extractAndValidateToken(bearerToken);
             InsuranceInfo insuranceInfo = insuranceService.addOrUpdateInsurance(insuranceInfoDTO);
-
-            // Wrap the response in a custom structure with a success message
             return ResponseEntity.ok(new ApiResponse<>("Insurance information updated successfully.", insuranceInfo));
         } catch (InsuranceServiceException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(e.getMessage(), null));
         } catch (Exception e) {
-            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(new ApiResponse<>("An unexpected error occurred: " + e.getMessage(), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>("An unexpected error occurred: " + e.getMessage(), null));
         }
     }
 
     @GetMapping("/GetAllInsuranceInfo")
-    public ResponseEntity<?> getAllInsuranceInfo(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<ApiResponse<?>> getAllInsuranceInfo(@RequestHeader("Authorization") String bearerToken) {
         try {
+            String token = extractAndValidateToken(bearerToken);
             List<InsuranceInfo> insuranceInfoList = insuranceService.getAllInsuranceInfo();
-
             if (insuranceInfoList.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT).body(new ApiResponse<>("No insurance information found.", null));
             }
@@ -111,14 +105,14 @@ public class AccountController {
         } catch (InsuranceServiceException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>("Error fetching insurance information: " + e.getMessage(), null));
         } catch (Exception e) {
-            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(new ApiResponse<>("An unexpected error occurred: " + e.getMessage(), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>("An unexpected error occurred: " + e.getMessage(), null));
         }
     }
 
     @PostMapping("/BulkInsuranceInputs")
-    public ResponseEntity<String> addOrUpdateBulkInsurance(@RequestHeader("Authorization") String token, @RequestBody List<BulkInsuranceDTO> bulkInsuranceDTOs) {
-
+    public ResponseEntity<String> addOrUpdateBulkInsurance(@RequestHeader("Authorization") String bearerToken, @RequestBody List<BulkInsuranceDTO> bulkInsuranceDTOs) {
         try {
+            String token = extractAndValidateToken(bearerToken);
             bulkInsuranceService.addOrUpdateBulkInsurance(bulkInsuranceDTOs);
             return ResponseEntity.ok("Bulk insurance inputs added/updated successfully.");
         } catch (InsuranceServiceException e) {
@@ -126,53 +120,49 @@ public class AccountController {
         } catch (InvalidDateFormatException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid date format: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
         }
     }
 
     @GetMapping("/getInsuranceInputList")
-    public ResponseEntity<?> getAllBulkInsuranceInputs(@RequestHeader("Authorization") String token) {
-
+    public ResponseEntity<?> getAllBulkInsuranceInputs(@RequestHeader("Authorization") String bearerToken) {
         try {
+            String token = extractAndValidateToken(bearerToken);
             List<BulkInsuranceInput> inputs = bulkInsuranceService.getAllBulkInsuranceInputs();
-
             if (inputs.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT).body("No bulk insurance records found.");
             }
-
             return ResponseEntity.ok(inputs);
         } catch (InsuranceServiceException e) {
-
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
         }
     }
 
     @PostMapping("/CreateSideNote")
-    public ResponseEntity<?> addOrUpdateSideNote(@RequestHeader("Authorization") String token, @RequestBody SideNoteDTO sideNoteDTO) {
+    public ResponseEntity<?> addOrUpdateSideNote(@RequestHeader("Authorization") String bearerToken, @RequestBody SideNoteDTO sideNoteDTO) {
         try {
+            String token = extractAndValidateToken(bearerToken);
             if (sideNoteDTO == null || sideNoteDTO.getAccountId() == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Account ID cannot be null.");
             }
-
             SideNote sideNote = sideNoteService.addOrUpdateSideNote(sideNoteDTO);
             return ResponseEntity.ok(sideNote);
         } catch (SideNoteServiceException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error adding/updating side note: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
         }
     }
 
-
     @GetMapping("/GetSideNotes")
-    public ResponseEntity<?> getSideNotesByAccountId(@RequestHeader("Authorization") String token, @RequestParam Integer accountId) {
+    public ResponseEntity<?> getSideNotesByAccountId(@RequestHeader("Authorization") String bearerToken, @RequestParam Integer accountId) {
         try {
+            String token = extractAndValidateToken(bearerToken);
             if (accountId == null || accountId <= 0) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid Account ID.");
             }
-
             List<SideNote> sideNotes = sideNoteService.getSideNotesByAccountId(accountId);
             if (sideNotes.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT).body("No side notes found for the provided Account ID.");
@@ -181,91 +171,89 @@ public class AccountController {
         } catch (SideNoteServiceException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error fetching side notes: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
         }
     }
 
     @GetMapping("/AllSideNotes")
-    public ResponseEntity<?> getAllSideNotes(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<?> getAllSideNotes(@RequestHeader("Authorization") String bearerToken) {
         try {
+            String token = extractAndValidateToken(bearerToken);
             List<SideNote> sideNotes = sideNoteService.getAllSideNotes();
             if (sideNotes.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT).body("No side notes found.");
             }
             return ResponseEntity.ok(sideNotes);
         } catch (Exception e) {
-            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
         }
     }
 
     @GetMapping("/GetAccountInfo")
-    public ResponseEntity<AccountInfoDTO> getAccountInfo(@RequestHeader("Authorization") String token, @RequestParam Integer accountId) {
-        AccountInfoDTO accountInfo = accountInfoService.getAccountInfo(accountId);
-        return ResponseEntity.ok(accountInfo);
+    public ResponseEntity<AccountInfoDTO> getAccountInfo(@RequestHeader("Authorization") String bearerToken, @RequestParam Integer accountId) {
+        try {
+            String token = extractAndValidateToken(bearerToken);
+            AccountInfoDTO accountInfo = accountInfoService.getAccountInfo(accountId);
+            return ResponseEntity.ok(accountInfo);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 
     @GetMapping("/GetQueueList")
-    public ResponseEntity<List<QueueDTO>> getQueueList(@RequestHeader("Authorization") String token) {
-        List<QueueDTO> queueList = queueService.getQueueList();
-        return ResponseEntity.ok(queueList);
+    public ResponseEntity<List<QueueDTO>> getQueueList(@RequestHeader("Authorization") String bearerToken) {
+        try {
+            String token = extractAndValidateToken(bearerToken);
+            List<QueueDTO> queueList = queueService.getQueueList();
+            return ResponseEntity.ok(queueList);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 
     @PostMapping("/AddOrUpdateSalesLocation")
-    public ResponseEntity<ApiResponse<?>> addOrUpdateSalesLocation(@RequestHeader("Authorization") String token, @RequestBody @Valid SalesLocationDTO salesLocationDTO) {
-
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(UNAUTHORIZED).body(new ApiResponse<>("Authorization token is missing or invalid.", null));
-        }
-
+    public ResponseEntity<ApiResponse<?>> addOrUpdateSalesLocation(@RequestHeader("Authorization") String bearerToken, @RequestBody @Valid SalesLocationDTO salesLocationDTO) {
         try {
+            String token = extractAndValidateToken(bearerToken);
             SalesLocation salesLocation = salesLocationService.addOrUpdateSalesLocation(salesLocationDTO);
             ApiResponse<SalesLocation> response = new ApiResponse<>("Sales location created/updated successfully with ID: " + salesLocation.getSalesLocationId(), salesLocation);
-            return ResponseEntity.status(CREATED).body(response);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception ex) {
             ApiResponse<String> errorResponse = new ApiResponse<>("An error occurred while processing your request: " + ex.getMessage(), null);
-            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
     @GetMapping("/GetSalesLocations")
-    public ResponseEntity<ApiResponse<?>> getAllSalesLocations(@RequestHeader("Authorization") String token) {
-
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(UNAUTHORIZED).body(new ApiResponse<>("Authorization token is missing or invalid.", null));
-        }
-
+    public ResponseEntity<ApiResponse<?>> getAllSalesLocations(@RequestHeader("Authorization") String bearerToken) {
         try {
+            String token = extractAndValidateToken(bearerToken);
             List<SalesLocation> salesLocations = salesLocationService.getAllSalesLocations();
             if (salesLocations.isEmpty()) {
                 ApiResponse<String> noContentResponse = new ApiResponse<>("No sales locations found.", null);
-                return ResponseEntity.status(NO_CONTENT).body(noContentResponse);
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(noContentResponse);
             }
             ApiResponse<List<SalesLocation>> successResponse = new ApiResponse<>("Sales locations retrieved successfully.", salesLocations);
             return ResponseEntity.ok(successResponse);
         } catch (Exception ex) {
             ApiResponse<String> errorResponse = new ApiResponse<>("An error occurred while retrieving the sales locations: " + ex.getMessage(), null);
-            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
-
     @GetMapping("/GetSalesLocation/{id}")
-    public ResponseEntity<ApiResponse<?>> getSalesLocationById(@RequestHeader("Authorization") String token, @PathVariable Integer id) {
-
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(UNAUTHORIZED).body(new ApiResponse<>("Authorization token is missing or invalid.", null));
-        }
-
+    public ResponseEntity<ApiResponse<?>> getSalesLocationById(@RequestHeader("Authorization") String bearerToken, @PathVariable Integer id) {
         try {
+            String token = extractAndValidateToken(bearerToken);
             SalesLocation salesLocation = salesLocationService.getSalesLocationById(id);
             ApiResponse<SalesLocation> successResponse = new ApiResponse<>("SalesLocation found for ID: " + id, salesLocation);
             return ResponseEntity.ok(successResponse);
         } catch (RuntimeException ex) {
             ApiResponse<String> notFoundResponse = new ApiResponse<>("SalesLocation not found for ID: " + id, null);
-            return ResponseEntity.status(NOT_FOUND).body(notFoundResponse);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(notFoundResponse);
         } catch (Exception ex) {
             ApiResponse<String> errorResponse = new ApiResponse<>("An error occurred while retrieving the sales location: " + ex.getMessage(), null);
-            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 }
